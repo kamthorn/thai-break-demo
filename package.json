@@ -1,0 +1,20 @@
+{
+  "name": "thai-break-demo",
+  "version": "1.0.1",
+  "description": "Interactive HTML + JavaScript live demo for ThaiBreak v1.0.1 (kamthorn/thai-break)",
+  "main": "thai-break.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "build": "node scripts/build-bundle.js"
+  },
+  "keywords": [
+    "thai-break",
+    "thai-nlp",
+    "tokenizer",
+    "line-breaker",
+    "demo"
+  ],
+  "author": "Kamthorn Krairaksa",
+  "license": "Apache-2.0"
+}
