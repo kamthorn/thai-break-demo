@@ -1,20 +1,31 @@
 {
   "name": "thai-break-demo",
-  "version": "1.0.1",
-  "description": "Interactive HTML + JavaScript live demo for ThaiBreak v1.0.1 (kamthorn/thai-break)",
-  "main": "thai-break.js",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Interactive browser demo of ThaiBreak (kamthorn/thai-break): Thai word segmentation and UAX #14 line breaking with supplementary and user dictionaries",
   "type": "module",
   "scripts": {
+    "build": "node scripts/build.js",
     "start": "node server.js",
-    "build": "node scripts/build-bundle.js"
+    "test": "node --test test/assets.test.js",
+    "test:e2e": "node --test test/e2e.test.js"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.63.0"
   },
   "keywords": [
+    "thai",
     "thai-break",
-    "thai-nlp",
-    "tokenizer",
-    "line-breaker",
+    "word-segmentation",
+    "line-breaking",
+    "uax14",
     "demo"
   ],
   "author": "Kamthorn Krairaksa",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kamthorn/thai-break-demo.git"
+  },
+  "homepage": "https://kamthorn.github.io/thai-break-demo/"
 }

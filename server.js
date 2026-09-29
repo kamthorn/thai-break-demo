@@ -1,47 +1,45 @@
-// Simple zero-dependency HTTP static server for ThaiBreak Demo
-import http from 'http';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// Zero-dependency static server for local development: `npm start` (PORT=3000 by default).
+import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = process.env.PORT || 3000;
+const root = path.dirname(fileURLToPath(import.meta.url));
+const port = Number(process.env.PORT ?? 3000);
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
-  '.js': 'application/javascript; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
   '.txt': 'text/plain; charset=utf-8',
-  '.svg': 'image/svg+xml'
 };
 
 const server = http.createServer((req, res) => {
-  const urlPath = req.url.split('?')[0];
-  const safePath = path.normalize(urlPath).replace(/^(\.\.[/\\])+/, '');
-  let filePath = path.join(__dirname, safePath === '/' ? 'index.html' : safePath);
-
+  let urlPath;
+  try {
+    urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+  } catch {
+    res.writeHead(400).end('Bad Request');
+    return;
+  }
+  // Resolve inside the project directory only
+  const filePath = path.join(root, path.normalize(urlPath === '/' ? '/index.html' : urlPath));
+  if (!filePath.startsWith(root + path.sep)) {
+    res.writeHead(403).end('Forbidden');
+    return;
+  }
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('404 Not Found');
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('404 Not Found');
       return;
     }
-
-    const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-
-    res.writeHead(200, {
-      'Content-Type': contentType,
-      'Access-Control-Allow-Origin': '*'
-    });
+    res.writeHead(200, { 'Content-Type': MIME_TYPES[path.extname(filePath).toLowerCase()] ?? 'application/octet-stream' });
     fs.createReadStream(filePath).pipe(res);
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`\n======================================================`);
-  console.log(`🚀 ThaiBreak Demo is running!`);
-  console.log(`👉 Open in browser: http://localhost:${PORT}`);
-  console.log(`======================================================\n`);
+server.listen(port, '127.0.0.1', () => {
+  console.log(`ThaiBreak demo: http://localhost:${server.address().port}`);
 });
