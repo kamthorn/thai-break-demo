@@ -2,155 +2,279 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ThaiBreak Demo - เครื่องมือตัดคำและตัดบรรทัดภาษาไทย</title>
-  
-  <!-- Thai Font: Sarabun from Google Fonts -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ThaiBreak Demo — ทดลองตัดคำและตัดบรรทัดภาษาไทย</title>
+  <meta name="description" content="ทดลองตัดคำและตัดแบ่งบรรทัดภาษาไทยด้วย ThaiBreak ในเบราว์เซอร์ เพิ่มพจนานุกรมเสริมและพจนานุกรมของคุณเองได้ ข้อความไม่ถูกส่งออกนอกเครื่อง">
+  <meta name="theme-color" content="#4338ca">
+  <meta property="og:title" content="ThaiBreak Demo — ตัดคำและตัดบรรทัดภาษาไทย">
+  <meta property="og:description" content="ทดลองตัดคำ ตัดบรรทัดตาม Unicode UAX #14 และทดสอบพจนานุกรมของคุณเอง ทำงานในเบราว์เซอร์ทั้งหมด">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234338ca'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='sans-serif'%3E%E0%B8%95%3C/text%3E%3C/svg%3E">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
 
-  <!-- Stylesheet -->
-  <link rel="stylesheet" href="thai-break.css">
+  <script src="assets/build-info.js" defer></script>
+  <script src="assets/thai-break.js" defer></script>
+  <script src="assets/data-base.js" defer></script>
+  <script src="assets/app.js" defer></script>
 </head>
 <body>
+  <a class="skip-link" href="#input-text">ข้ามไปที่ช่องข้อความ</a>
 
-  <div class="container">
-    
-    <!-- Header -->
-    <header class="header">
-      <a href="https://github.com/kamthorn/thai-break" target="_blank" rel="noopener noreferrer" class="header-badge">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-        </svg>
-        kamthorn / thai-break v1.0.1
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="https://github.com/kamthorn/thai-break" target="_blank" rel="noopener">
+        <span class="brand-mark" aria-hidden="true">ตัด</span>
+        <span class="brand-name">ThaiBreak <small>Live Demo</small></span>
       </a>
-      <h1>ThaiBreak <span>Live Demo</span></h1>
-      <p>ระบบตัดคำ (Word Segmentation) และตัดแบ่งบรรทัดจัดหน้า (Typographic Line Breaking) ภาษาไทยความเร็วสูง ตามมาตรฐาน W3C &amp; Unicode UAX #14 บนพจนานุกรมราชบัณฑิตยสถาน 25,907 คำ</p>
-    </header>
+      <nav class="header-nav" aria-label="ลิงก์โครงการ">
+        <a href="#related">โครงการที่เกี่ยวข้อง</a>
+        <a href="https://github.com/kamthorn/thai-break#readme" target="_blank" rel="noopener">เอกสาร</a>
+        <a class="btn-github" href="https://github.com/kamthorn/thai-break" target="_blank" rel="noopener">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </nav>
+    </div>
+  </header>
 
-    <!-- Input Card -->
-    <section class="card">
-      <div class="card-title">
-        <span>ข้อความต้นฉบับ (Input Text)</span>
-      </div>
+  <section class="hero">
+    <div class="wrap">
+      <h1>ทดลองตัดคำและตัดบรรทัดภาษาไทย</h1>
+      <p class="lead">ใช้แกนประมวลผลเดียวกับแพ็กเกจ <a href="https://www.npmjs.com/package/thai-break" target="_blank" rel="noopener">thai-break</a> ตัดคำด้วย Viterbi + TCC และตัดบรรทัดตาม Unicode UAX #14 ทดสอบพจนานุกรมเสริมหรืออัปโหลดพจนานุกรมของคุณเองได้ก่อนนำไปใช้จริง</p>
+      <ul class="hero-facts" id="hero-facts">
+        <li><strong id="fact-version">thai-break</strong></li>
+        <li>พจนานุกรมพื้นฐาน <strong id="fact-base">–</strong> คำ</li>
+        <li>dict-extra <strong id="fact-extra">–</strong> คำ</li>
+        <li class="fact-privacy">🔒 ประมวลผลในเบราว์เซอร์ ข้อความและพจนานุกรมไม่ถูกส่งออกนอกเครื่อง</li>
+      </ul>
+    </div>
+  </section>
 
-      <!-- Presets -->
-      <div class="presets-bar">
-        <span class="presets-label">ข้อความตัวอย่าง:</span>
-        <button type="button" class="btn-preset" data-preset="basic">📌 ประโยคสั้น</button>
-        <button type="button" class="btn-preset" data-preset="v101">✨ กฎ v1.0.1 (ISO/IEC, WP01)</button>
-        <button type="button" class="btn-preset" data-preset="punct">📌 วรรคตอน / วงเล็บ / ไม้ยมก</button>
-        <button type="button" class="btn-preset" data-preset="paragraph">📌 ย่อหน้าแนะนำโครงการ</button>
-        <button type="button" class="btn-preset" data-preset="long">📌 บทความยาว (~1,200 ตัวอักษร)</button>
-        <button type="button" class="btn-preset" data-preset="stress">🚀 ทดสอบ 5,000 ตัวอักษร</button>
-      </div>
+  <main class="wrap layout">
+    <!-- ================= Settings ================= -->
+    <aside class="panel settings" aria-labelledby="settings-title">
+      <h2 id="settings-title" class="panel-title">ตั้งค่า</h2>
 
-      <!-- Textarea input -->
-      <div class="input-wrapper">
-        <textarea id="input-text" class="text-input" placeholder="พิมพ์หรือวางข้อความภาษาไทยที่นี่ (สามารถใส่ได้มากถึง 5,000 ตัวอักษร)..." spellcheck="false"></textarea>
-      </div>
+      <fieldset class="field">
+        <legend>รูปแบบการตัด</legend>
+        <div class="segmented" role="radiogroup">
+          <input type="radio" id="mode-word" name="mode" value="word" checked>
+          <label for="mode-word"><span>ตัดคำ</span><small>Word segmentation</small></label>
+          <input type="radio" id="mode-line" name="mode" value="line">
+          <label for="mode-line"><span>จุดตัดบรรทัด</span><small>Line breaking (UAX #14)</small></label>
+        </div>
+      </fieldset>
 
-      <div class="input-footer">
-        <span id="char-counter" class="char-counter">0 / 5,000 ตัวอักษร</span>
-        <button type="button" id="btn-clear" class="btn-clear">ล้างข้อความ</button>
-      </div>
+      <fieldset class="field">
+        <legend>พจนานุกรม</legend>
 
-      <!-- Mode Selector & Action Buttons -->
-      <div class="control-row">
-        <div class="mode-selector">
-          <span class="mode-label">รูปแบบการตัด:</span>
-          <div class="pill-group">
-            <div class="pill-option">
-              <input type="radio" id="mode-word" name="break-mode" value="word" checked>
-              <label for="mode-word">
-                <span>ตัดแบบ Word</span>
-              </label>
-            </div>
-            <div class="pill-option">
-              <input type="radio" id="mode-line" name="break-mode" value="line">
-              <label for="mode-line">
-                <span>ตัดแบบ Line</span>
-              </label>
-            </div>
+        <div class="dict-row">
+          <span class="swatch swatch-base" aria-hidden="true"></span>
+          <div>
+            <div class="dict-name">พื้นฐาน <span class="muted">(ใช้เสมอ)</span></div>
+            <div class="dict-meta"><span id="base-count">–</span> คำ · ราชบัณฑิตยสถาน · <a href="https://github.com/kamthorn/thai-break/tree/main/data" target="_blank" rel="noopener">thai-break/data</a></div>
           </div>
         </div>
 
-        <div class="action-buttons">
-          <button type="button" id="btn-process" class="btn-primary">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            ตัดคำ
-            <span class="btn-shortcut">Ctrl+Enter</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Output Card -->
-    <section class="card output-card">
-      <div class="card-title">
-        <span>ผลลัพธ์การตัดคำ (Segmented Output)</span>
-      </div>
-
-      <!-- Performance Stats -->
-      <div class="stats-bar">
-        <span id="stat-mode" class="stat-chip highlight">โหมด: <strong>ตัดแบบ Word</strong></span>
-        <span id="stat-time" class="stat-chip">⚡ เวลา: <strong>0.00 ms</strong></span>
-        <span id="stat-words" class="stat-chip">📝 คำ/ส่วน: <strong>0</strong></span>
-        <span id="stat-chars" class="stat-chip">📏 ตัวอักษร: <strong>0</strong></span>
-        <span id="stat-speed" class="stat-chip">🚀 ความเร็ว: <strong>-</strong></span>
-      </div>
-
-      <!-- Display Box (words separated by gray-dots) -->
-      <div id="output-display" class="output-display"></div>
-
-      <!-- Output Actions: Copying -->
-      <div class="output-actions">
-        <div class="copy-group">
-          <button type="button" id="btn-copy-dots" class="btn-secondary" title="คัดลอกข้อความพร้อมจุดคั่นกลางคำ">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            คัดลอกพร้อมจุด (·)
-          </button>
-          <button type="button" id="btn-copy-pipe" class="btn-secondary" title="คัดลอกข้อความคั่นด้วยเครื่องหมาย Pipe">
-            คัดลอกแบบ Pipe (|)
-          </button>
-          <button type="button" id="btn-copy-zwsp" class="btn-secondary" title="แทรก Zero-Width Space (U+200B) สำหรับใช้จัดหน้าเว็บ/PDF">
-            คัดลอกแบบ ZWSP (U+200B)
-          </button>
-          <button type="button" id="btn-copy-json" class="btn-secondary" title="คัดลอกผลลัพธ์เป็น JSON Array">
-            คัดลอก JSON
-          </button>
-        </div>
-        <span id="copy-toast" class="toast">✓ คัดลอกสำเร็จ!</span>
-      </div>
-
-      <!-- Bonus: Interactive Line Wrapping Preview -->
-      <div class="sim-section">
-        <div class="sim-header">
-          <span class="sim-title">จำลองการตัดบรรทัดตามความกว้าง (Interactive Line Wrap Preview)</span>
-          <div class="sim-slider-wrapper">
-            <label for="sim-width-slider">ความกว้างคอลัมน์:</label>
-            <input type="range" id="sim-width-slider" min="200" max="800" value="420" step="10">
-            <span id="sim-width-val">420px</span>
+        <div class="dict-row">
+          <span class="swatch swatch-extra" aria-hidden="true"></span>
+          <div class="grow">
+            <label class="dict-name" for="extra-select">เสริม <a href="https://github.com/kamthorn/thai-break-dict-extra" target="_blank" rel="noopener">thai-break-dict-extra</a></label>
+            <select id="extra-select">
+              <option value="auto">อัตโนมัติตามรูปแบบการตัด (แนะนำ)</option>
+              <option value="extra">ชุดตัดคำ (words-extra)</option>
+              <option value="extraLines">ชุดตัดบรรทัด (words-extra-lines)</option>
+              <option value="none">ไม่ใช้</option>
+            </select>
+            <div class="dict-meta" id="extra-meta" aria-live="polite">–</div>
           </div>
         </div>
-        <div class="sim-box-container">
-          <div id="sim-box" class="sim-box" style="width: 420px;"></div>
+
+        <div class="dict-row user-dict">
+          <span class="swatch swatch-user" aria-hidden="true"></span>
+          <div class="grow">
+            <label class="dict-name" for="user-words">ของคุณ (User dictionary)</label>
+            <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-describedby="dropzone-hint">
+              <input type="file" id="user-file" accept=".txt,.tsv,.csv,text/plain,text/tab-separated-values,text/csv" hidden>
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              <span><strong>อัปโหลดไฟล์</strong> หรือลากมาวาง</span>
+              <small id="dropzone-hint">.txt คำละบรรทัด หรือ .tsv/.csv แบบ <code>คำ⇥น้ำหนัก</code></small>
+            </div>
+            <textarea id="user-words" rows="5" spellcheck="false" placeholder="หรือพิมพ์คำทีละบรรทัด เช่น&#10;การเรียนรู้เชิงลึก&#10;แอปพลิเคชัน&#9;8"></textarea>
+            <div class="inline-fields">
+              <label for="user-weight">น้ำหนักเริ่มต้น</label>
+              <input type="number" id="user-weight" min="0.1" max="100" step="0.5" value="5">
+              <button type="button" class="btn-link" id="weight-help-toggle" aria-expanded="false" aria-controls="weight-help">คืออะไร?</button>
+            </div>
+            <p class="help" id="weight-help" hidden>น้ำหนักมากขึ้น คำนั้นจะถูกเลือกมากขึ้นเมื่อมีทางตัดหลายแบบ พจนานุกรมพื้นฐานมีน้ำหนัก 1 ส่วน dict-extra ใช้ 0.5–8 ตามหมวด ค่าที่ใส่หลังคำในแต่ละบรรทัดจะใช้แทนค่าเริ่มต้น</p>
+            <div class="user-status" id="user-status" aria-live="polite">ยังไม่มีคำของคุณ</div>
+            <div class="button-row">
+              <label class="check"><input type="checkbox" id="user-remember"> จำไว้ในเบราว์เซอร์นี้</label>
+              <span class="spacer"></span>
+              <button type="button" class="btn-ghost" id="user-download" disabled>ดาวน์โหลด .tsv</button>
+              <button type="button" class="btn-ghost danger" id="user-clear" disabled>ล้าง</button>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </fieldset>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <p>พัฒนาขึ้นสำหรับโครงการ <a href="https://github.com/kamthorn/thai-break" target="_blank" rel="noopener noreferrer">ThaiBreak</a> โดย <a href="https://github.com/kamthorn" target="_blank" rel="noopener noreferrer">Kamthorn Krairaksa</a> | เผยแพร่ภายใต้สัญญาอนุญาต Apache-2.0</p>
-    </footer>
+      <fieldset class="field">
+        <legend>การแสดงผล</legend>
+        <label class="check"><input type="checkbox" id="opt-colors" checked> ระบายสีตามพจนานุกรมที่พบคำ</label>
+        <label class="check"><input type="checkbox" id="opt-compare" checked> เทียบกับพจนานุกรมพื้นฐานอย่างเดียว</label>
+        <label class="check"><input type="checkbox" id="opt-live" checked> ตัดอัตโนมัติขณะพิมพ์</label>
+      </fieldset>
+    </aside>
 
-  </div>
+    <!-- ================= Workspace ================= -->
+    <div class="workspace">
+      <section class="panel" aria-labelledby="input-title">
+        <div class="panel-head">
+          <h2 id="input-title" class="panel-title">ข้อความ</h2>
+          <div class="presets" role="group" aria-label="ข้อความตัวอย่าง">
+            <button type="button" class="chip" data-preset="basic">ประโยคทั่วไป</button>
+            <button type="button" class="chip" data-preset="ambiguous">คำกำกวม</button>
+            <button type="button" class="chip" data-preset="extra">คำเฉพาะ/ข่าว</button>
+            <button type="button" class="chip" data-preset="punct">วรรคตอน/ตัวเลข</button>
+            <button type="button" class="chip" data-preset="uax14">กฎตัดบรรทัด</button>
+            <button type="button" class="chip" data-preset="long">บทความยาว</button>
+          </div>
+        </div>
+        <textarea id="input-text" class="text-input" spellcheck="false" placeholder="พิมพ์หรือวางข้อความภาษาไทยที่นี่…" aria-describedby="char-counter"></textarea>
+        <div class="input-foot">
+          <span id="char-counter" class="muted">0 ตัวอักษร</span>
+          <span class="spacer"></span>
+          <button type="button" class="btn-ghost" id="btn-clear">ล้าง</button>
+          <button type="button" class="btn-primary" id="btn-run">
+            ตัดคำ <kbd>Ctrl</kbd><kbd>Enter</kbd>
+          </button>
+        </div>
+      </section>
 
-  <!-- Scripts -->
-  <script src="thai-break.js"></script>
-  <script src="app.js"></script>
+      <section class="panel" aria-labelledby="output-title">
+        <div class="panel-head">
+          <h2 id="output-title" class="panel-title">ผลลัพธ์</h2>
+          <div class="stats" id="stats" aria-live="polite"></div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="มุมมองผลลัพธ์">
+          <button type="button" role="tab" id="tab-result" aria-controls="view-result" aria-selected="true">คำที่ตัดได้</button>
+          <button type="button" role="tab" id="tab-wrap" aria-controls="view-wrap" aria-selected="false" tabindex="-1">จำลองการขึ้นบรรทัด</button>
+          <button type="button" role="tab" id="tab-export" aria-controls="view-export" aria-selected="false" tabindex="-1">ส่งออก</button>
+          <button type="button" role="tab" id="tab-code" aria-controls="view-code" aria-selected="false" tabindex="-1">ใช้ในโค้ด</button>
+        </div>
+
+        <div role="tabpanel" id="view-result" aria-labelledby="tab-result">
+          <ul class="legend" id="legend">
+            <li><span class="swatch swatch-base"></span>พื้นฐาน</li>
+            <li><span class="swatch swatch-extra"></span>dict-extra</li>
+            <li><span class="swatch swatch-user"></span>ของคุณ</li>
+            <li><span class="swatch swatch-oov"></span>ไม่มีในพจนานุกรม</li>
+            <li><span class="swatch swatch-changed"></span>ต่างจากพื้นฐาน</li>
+          </ul>
+          <div id="output" class="output" aria-live="polite"></div>
+          <div id="compare" class="compare" hidden>
+            <div class="compare-head">
+              <strong>พจนานุกรมพื้นฐานอย่างเดียว</strong>
+              <span id="compare-summary" class="muted"></span>
+            </div>
+            <div id="compare-output" class="output output-compact"></div>
+          </div>
+        </div>
+
+        <div role="tabpanel" id="view-wrap" aria-labelledby="tab-wrap" hidden>
+          <p class="help">ข้อความจะขึ้นบรรทัดใหม่เฉพาะที่จุดตัดบรรทัดของ ThaiBreak (ช่องว่างหรือ U+200B) เปรียบเทียบกับการตัดของเบราว์เซอร์เอง ลองเลื่อนความกว้างดู</p>
+          <div class="slider-row">
+            <label for="wrap-width">ความกว้าง</label>
+            <input type="range" id="wrap-width" min="160" max="720" step="10" value="320">
+            <output id="wrap-width-value" for="wrap-width">320px</output>
+          </div>
+          <div class="wrap-compare">
+            <figure>
+              <figcaption>ThaiBreak (UAX #14 + พจนานุกรม)</figcaption>
+              <div class="wrap-box" id="wrap-thaibreak"></div>
+            </figure>
+            <figure>
+              <figcaption>เบราว์เซอร์ตัดเอง</figcaption>
+              <div class="wrap-box" id="wrap-browser"></div>
+            </figure>
+          </div>
+        </div>
+
+        <div role="tabpanel" id="view-export" aria-labelledby="tab-export" hidden>
+          <div class="export-grid">
+            <button type="button" class="btn-ghost" data-copy="pipe">คัดลอกแบบคั่น <code>|</code></button>
+            <button type="button" class="btn-ghost" data-copy="dot">คัดลอกแบบคั่น <code>·</code></button>
+            <button type="button" class="btn-ghost" data-copy="zwsp">คัดลอกพร้อม <code>U+200B</code> (สำหรับเว็บ/PDF)</button>
+            <button type="button" class="btn-ghost" data-copy="json">คัดลอก JSON</button>
+            <button type="button" class="btn-ghost" data-download="txt">ดาวน์โหลด .txt</button>
+            <button type="button" class="btn-ghost" data-download="json">ดาวน์โหลด .json</button>
+          </div>
+          <pre class="preview" id="export-preview"></pre>
+        </div>
+
+        <div role="tabpanel" id="view-code" aria-labelledby="tab-code" hidden>
+          <p class="help">ตัวอย่างการตั้งค่าแบบเดียวกับหน้านี้ในโปรเจกต์จริง (รวมคำของคุณแล้ว)</p>
+          <div class="code-tabs" role="group" aria-label="ภาษา">
+            <button type="button" class="chip active" data-lang="js">JavaScript / TypeScript</button>
+            <button type="button" class="chip" data-lang="php">PHP / Laravel</button>
+          </div>
+          <pre class="code" id="code-sample"></pre>
+          <button type="button" class="btn-ghost" id="copy-code">คัดลอกโค้ด</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <section class="wrap related" id="related" aria-labelledby="related-title">
+    <h2 id="related-title">โครงการที่เกี่ยวข้อง</h2>
+    <div class="cards">
+      <a class="card" href="https://github.com/kamthorn/thai-break" target="_blank" rel="noopener">
+        <strong>thai-break</strong>
+        <span>แกนตัดคำและตัดบรรทัด สำหรับ PHP/Laravel, Go, TypeScript, Rust, Python, C และ WebAssembly</span>
+        <em>Apache-2.0</em>
+      </a>
+      <a class="card" href="https://github.com/kamthorn/thai-break-dict-extra" target="_blank" rel="noopener">
+        <strong>thai-break-dict-extra</strong>
+        <span>พจนานุกรมเสริมแยกหมวด (ชื่อเฉพาะ คำข่าว คำทับศัพท์ คำย่อ ฯลฯ) ในรูปแบบ TXT, TSV, DAWG, FST</span>
+        <em>CC0-1.0</em>
+      </a>
+      <a class="card" href="https://github.com/kamthorn/opensearch-analysis-thaibreak" target="_blank" rel="noopener">
+        <strong>opensearch-analysis-thaibreak</strong>
+        <span>ปลั๊กอินวิเคราะห์ข้อความภาษาไทยสำหรับ OpenSearch ด้วยแกน ThaiBreak</span>
+        <em>OpenSearch plugin</em>
+      </a>
+      <a class="card" href="https://github.com/kamthorn/opensearch-thai-best-practices" target="_blank" rel="noopener">
+        <strong>opensearch-thai-best-practices</strong>
+        <span>แนวทางและตัวอย่างการตั้งค่าภาษาไทยใน OpenSearch: normalization, stopwords, การเรียงลำดับ, hybrid search</span>
+        <em>คู่มือ</em>
+      </a>
+    </div>
+    <ul class="registries" aria-label="ติดตั้งแพ็กเกจ">
+      <li><a href="https://www.npmjs.com/package/thai-break" target="_blank" rel="noopener">npm <code>thai-break</code></a></li>
+      <li><a href="https://packagist.org/packages/kamthorn/thai-break" target="_blank" rel="noopener">Composer <code>kamthorn/thai-break</code></a></li>
+      <li><a href="https://pypi.org/project/thaibreak/" target="_blank" rel="noopener">PyPI <code>thaibreak</code></a></li>
+      <li><a href="https://crates.io/crates/thaibreak" target="_blank" rel="noopener">crates.io <code>thaibreak</code></a></li>
+      <li><a href="https://pkg.go.dev/github.com/kamthorn/thai-break/go" target="_blank" rel="noopener">Go <code>github.com/kamthorn/thai-break/go</code></a></li>
+    </ul>
+  </section>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>
+        ข้อมูล: พจนานุกรมพื้นฐานจาก <a href="https://github.com/kamthorn/thai-break" target="_blank" rel="noopener">thai-break</a> (Apache-2.0)
+        · พจนานุกรมเสริมจาก <a href="https://github.com/kamthorn/thai-break-dict-extra" target="_blank" rel="noopener">thai-break-dict-extra</a> (CC0-1.0)
+      </p>
+      <p class="muted" id="build-info"></p>
+      <p class="muted">เดโมนี้เผยแพร่ภายใต้สัญญาอนุญาต Apache-2.0 · <a href="https://github.com/kamthorn/thai-break-demo" target="_blank" rel="noopener">ซอร์สโค้ดของหน้านี้</a> · โดย <a href="https://github.com/kamthorn" target="_blank" rel="noopener">Kamthorn Krairaksa</a></p>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <noscript><p class="noscript">หน้านี้ต้องเปิดใช้งาน JavaScript</p></noscript>
 </body>
 </html>
