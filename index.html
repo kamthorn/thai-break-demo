@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThaiBreak Demo - เครื่องมือตัดคำและตัดบรรทัดภาษาไทย</title>
+  
+  <!-- Thai Font: Sarabun from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="thai-break.css">
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Header -->
+    <header class="header">
+      <a href="https://github.com/kamthorn/thai-break" target="_blank" rel="noopener noreferrer" class="header-badge">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        kamthorn / thai-break v1.0.1
+      </a>
+      <h1>ThaiBreak <span>Live Demo</span></h1>
+      <p>ระบบตัดคำ (Word Segmentation) และตัดแบ่งบรรทัดจัดหน้า (Typographic Line Breaking) ภาษาไทยความเร็วสูง ตามมาตรฐาน W3C &amp; Unicode UAX #14 บนพจนานุกรมราชบัณฑิตยสถาน 25,907 คำ</p>
+    </header>
+
+    <!-- Input Card -->
+    <section class="card">
+      <div class="card-title">
+        <span>ข้อความต้นฉบับ (Input Text)</span>
+      </div>
+
+      <!-- Presets -->
+      <div class="presets-bar">
+        <span class="presets-label">ข้อความตัวอย่าง:</span>
+        <button type="button" class="btn-preset" data-preset="basic">📌 ประโยคสั้น</button>
+        <button type="button" class="btn-preset" data-preset="v101">✨ กฎ v1.0.1 (ISO/IEC, WP01)</button>
+        <button type="button" class="btn-preset" data-preset="punct">📌 วรรคตอน / วงเล็บ / ไม้ยมก</button>
+        <button type="button" class="btn-preset" data-preset="paragraph">📌 ย่อหน้าแนะนำโครงการ</button>
+        <button type="button" class="btn-preset" data-preset="long">📌 บทความยาว (~1,200 ตัวอักษร)</button>
+        <button type="button" class="btn-preset" data-preset="stress">🚀 ทดสอบ 5,000 ตัวอักษร</button>
+      </div>
+
+      <!-- Textarea input -->
+      <div class="input-wrapper">
+        <textarea id="input-text" class="text-input" placeholder="พิมพ์หรือวางข้อความภาษาไทยที่นี่ (สามารถใส่ได้มากถึง 5,000 ตัวอักษร)..." spellcheck="false"></textarea>
+      </div>
+
+      <div class="input-footer">
+        <span id="char-counter" class="char-counter">0 / 5,000 ตัวอักษร</span>
+        <button type="button" id="btn-clear" class="btn-clear">ล้างข้อความ</button>
+      </div>
+
+      <!-- Mode Selector & Action Buttons -->
+      <div class="control-row">
+        <div class="mode-selector">
+          <span class="mode-label">รูปแบบการตัด:</span>
+          <div class="pill-group">
+            <div class="pill-option">
+              <input type="radio" id="mode-word" name="break-mode" value="word" checked>
+              <label for="mode-word">
+                <span>ตัดแบบ Word</span>
+              </label>
+            </div>
+            <div class="pill-option">
+              <input type="radio" id="mode-line" name="break-mode" value="line">
+              <label for="mode-line">
+                <span>ตัดแบบ Line</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button type="button" id="btn-process" class="btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            ตัดคำ
+            <span class="btn-shortcut">Ctrl+Enter</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Output Card -->
+    <section class="card output-card">
+      <div class="card-title">
+        <span>ผลลัพธ์การตัดคำ (Segmented Output)</span>
+      </div>
+
+      <!-- Performance Stats -->
+      <div class="stats-bar">
+        <span id="stat-mode" class="stat-chip highlight">โหมด: <strong>ตัดแบบ Word</strong></span>
+        <span id="stat-time" class="stat-chip">⚡ เวลา: <strong>0.00 ms</strong></span>
+        <span id="stat-words" class="stat-chip">📝 คำ/ส่วน: <strong>0</strong></span>
+        <span id="stat-chars" class="stat-chip">📏 ตัวอักษร: <strong>0</strong></span>
+        <span id="stat-speed" class="stat-chip">🚀 ความเร็ว: <strong>-</strong></span>
+      </div>
+
+      <!-- Display Box (words separated by gray-dots) -->
+      <div id="output-display" class="output-display"></div>
+
+      <!-- Output Actions: Copying -->
+      <div class="output-actions">
+        <div class="copy-group">
+          <button type="button" id="btn-copy-dots" class="btn-secondary" title="คัดลอกข้อความพร้อมจุดคั่นกลางคำ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            คัดลอกพร้อมจุด (·)
+          </button>
+          <button type="button" id="btn-copy-pipe" class="btn-secondary" title="คัดลอกข้อความคั่นด้วยเครื่องหมาย Pipe">
+            คัดลอกแบบ Pipe (|)
+          </button>
+          <button type="button" id="btn-copy-zwsp" class="btn-secondary" title="แทรก Zero-Width Space (U+200B) สำหรับใช้จัดหน้าเว็บ/PDF">
+            คัดลอกแบบ ZWSP (U+200B)
+          </button>
+          <button type="button" id="btn-copy-json" class="btn-secondary" title="คัดลอกผลลัพธ์เป็น JSON Array">
+            คัดลอก JSON
+          </button>
+        </div>
+        <span id="copy-toast" class="toast">✓ คัดลอกสำเร็จ!</span>
+      </div>
+
+      <!-- Bonus: Interactive Line Wrapping Preview -->
+      <div class="sim-section">
+        <div class="sim-header">
+          <span class="sim-title">จำลองการตัดบรรทัดตามความกว้าง (Interactive Line Wrap Preview)</span>
+          <div class="sim-slider-wrapper">
+            <label for="sim-width-slider">ความกว้างคอลัมน์:</label>
+            <input type="range" id="sim-width-slider" min="200" max="800" value="420" step="10">
+            <span id="sim-width-val">420px</span>
+          </div>
+        </div>
+        <div class="sim-box-container">
+          <div id="sim-box" class="sim-box" style="width: 420px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>พัฒนาขึ้นสำหรับโครงการ <a href="https://github.com/kamthorn/thai-break" target="_blank" rel="noopener noreferrer">ThaiBreak</a> โดย <a href="https://github.com/kamthorn" target="_blank" rel="noopener noreferrer">Kamthorn Krairaksa</a> | เผยแพร่ภายใต้สัญญาอนุญาต Apache-2.0</p>
+    </footer>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="thai-break.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
