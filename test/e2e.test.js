@@ -58,7 +58,7 @@ const setText = async (page, text) => {
 test('loads, segments the default text and shows the build info', async () => {
   const { page, errors } = await openPage({ viewport: { width: 1280, height: 900 } });
   assert.deepEqual((await tokens(page)).slice(0, 3), ['สวัสดี', 'ครับ', 'ยินดี']);
-  assert.match(await page.textContent('#fact-base'), /25,907/);
+  assert.match(await page.textContent('#fact-base'), /25,402/);
   assert.match(await page.textContent('#build-info'), /thai-break@\w+/);
   await page.click('[data-preset="extra"]');
   await page.waitForTimeout(300);

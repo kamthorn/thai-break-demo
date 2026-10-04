@@ -2,9 +2,9 @@
 window.ThaiBreakBuild = {
   "builtAt": "2026-10-04",
   "thaiBreak": {
-    "version": "1.2.0",
-    "commit": "ab94d24",
-    "date": "2026-10-03",
+    "version": "1.3.0",
+    "commit": "4a6eefa",
+    "date": "2026-10-04",
     "baseWords": 25402
   },
   "dictExtra": {
