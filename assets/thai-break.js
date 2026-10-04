@@ -1,7 +1,7 @@
 /**
- * ThaiBreak 1.1.0 — browser bundle for the demo
+ * ThaiBreak 1.2.0 — browser bundle for the demo
  * https://github.com/kamthorn/thai-break (Apache-2.0)
- * Built from thai-break@9f69d96 by scripts/build.js. Do not edit.
+ * Built from thai-break@ab94d24 by scripts/build.js. Do not edit.
  */
 (function (root) {
   'use strict';
@@ -1166,7 +1166,8 @@ const PAT_NONTHAI = /^(?:[a-zA-Z]+(?:[-_'][a-zA-Z0-9]+)*|\d+(?:,\d+)*(?:\.\d+)?%
 const PAT_ABBR = /^(?:(?:[เแโใไ]?[ก-ฮ][ัิีึืุู็่้๊๋]?|[ก-ฮ]{1,4})\.)+/u;
 /**
  * Normalize common Thai spelling variants for dictionary matching:
- * เ + เ → แ, ํ + า → ำ, ํ + tone + า → tone + ำ (e.g. "นํ้า" → "น้ำ").
+ * เ + เ → แ, ํ + า → ำ, ํ + tone + า → tone + ำ (e.g. "นํ้า" → "น้ำ"), and a
+ * tone mark typed after Sara Am is moved before it (ำ + tone → tone + ำ, "นำ้" → "น้ำ").
  * Returns the normalized characters and, for each of them, the index of the
  * original character it starts at (plus a final entry for the end). Token
  * boundaries never fall inside a replaced pair, so tokens map back to exact
@@ -1182,11 +1183,21 @@ function normalizeForMatching(chars) {
             norm.push('แ');
             orig.push(i++);
         }
+        else if (chars[i] === 'ำ' && isToneMark(next)) {
+            norm.push(next, 'ำ');
+            orig.push(i, i);
+            i += 1;
+        }
+        else if (chars[i] === '\u0e4d' && next === 'า' && isToneMark(chars[i + 2] ?? '')) {
+            norm.push(chars[i + 2], 'ำ');
+            orig.push(i, i);
+            i += 2;
+        }
         else if (chars[i] === '\u0e4d' && next === 'า') {
             norm.push('ำ');
             orig.push(i++);
         }
-        else if (chars[i] === '\u0e4d' && next >= '่' && next <= '๋' && chars[i + 2] === 'า') {
+        else if (chars[i] === '\u0e4d' && isToneMark(next) && chars[i + 2] === 'า') {
             norm.push(next, 'ำ');
             orig.push(i, i);
             i += 2;
@@ -1198,6 +1209,9 @@ function normalizeForMatching(chars) {
     }
     orig.push(n);
     return [norm, orig];
+}
+function isToneMark(ch) {
+    return ch >= '่' && ch <= '๋';
 }
 function isThaiRune(code) {
     return code >= 0x0e00 && code <= 0x0e7f;
@@ -1562,7 +1576,7 @@ function fillLines(segments, width) {
     return { DEFAULT_BREAK_MARKER, canBreakBetween, thaiDisplayWidth, LineBreaker };
   })();
 
-  const api = { VERSION: "1.1.0" };
+  const api = { VERSION: "1.2.0" };
   for (const name of ["linebreak-data","uax14","tcc","trie","bigram","tokenizer","linebreaker"]) Object.assign(api, __modules[name]);
   root.ThaiBreak = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
