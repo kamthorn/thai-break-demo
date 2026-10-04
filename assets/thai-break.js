@@ -1,7 +1,7 @@
 /**
- * ThaiBreak 1.2.0 — browser bundle for the demo
+ * ThaiBreak 1.3.0 — browser bundle for the demo
  * https://github.com/kamthorn/thai-break (Apache-2.0)
- * Built from thai-break@ab94d24 by scripts/build.js. Do not edit.
+ * Built from thai-break@4a6eefa by scripts/build.js. Do not edit.
  */
 (function (root) {
   'use strict';
@@ -733,8 +733,10 @@ function getTCCPattern() {
     const d = '[ุู]';
     const k = '([ก-ฮ][ก-ฮ]?[ุูิ]?์)?';
     const rawRules = [
-        'c[ั]([่-๋]c)?',
-        'c[ั]([่-๋]c)?k',
+        // Mai Han-akat always has a final: -ัวะ, or a consonant (with or without a tone mark).
+        'cั[่-๋]?วะ',
+        'cั[่-๋]?ck',
+        'cั[่-๋]?',
         'เc็ck',
         'เcctาะk',
         'เccีtยะk',
@@ -742,10 +744,14 @@ function getTCCPattern() {
         'เc[ิีุู]tย(?=[เ-ไก-ฮ]|$|\\s)k',
         'เ(?:c[รลว]|หc)็ck',
         'เcิc์ck',
+        // A true cluster or ห-led onset between เ and the vowel belongs to the syllable (เครื่อง, เพลิง, เปล่า).
+        'เ(?:[กขคตปพผบด][รล]|[กขค]ว|ทร|ห[งญนมยรลว])ิtck',
         'เcิtck',
         'เcีtยะ?k',
+        'เ(?:[กขคตปพผบด][รล]|[กขค]ว|ทร|ห[งญนมยรลว])ืtอะ?k',
         'เcืtอะk',
         'เcืtอ?k',
+        'เ(?:[กขคตปพผบด][รล]|[กขค]ว|ทร|ห[งญนมยรลว])tาk',
         'เctา?ะ?k',
         'c[ึื]tck',
         'c[ะ-ู]tk',
@@ -1162,6 +1168,30 @@ const UNKNOWN_COST_FACTOR = 2.0;
  * wins and the earlier words stay longer ("ผิด|ราย" rather than "ผิ|ดราย").
  */
 const TIE_EPSILON = 1e-9;
+/**
+ * An out-of-vocabulary word may span up to this many TCC clusters. Such an edge competes with the
+ * dictionary words, so a long unknown word is kept whole instead of being cut into short words.
+ */
+const OOV_MAX_CLUSTERS = 6;
+/** Cost of an out-of-vocabulary edge of one cluster, relative to the cost of the rarest word. */
+const OOV_COST_FACTOR = 3.0;
+/**
+ * Extra cost per further cluster of an out-of-vocabulary edge, relative to the cost of the rarest
+ * word. Below about 0.5 an unknown word beats real words and F1 drops sharply.
+ */
+const OOV_CLUSTER_COST_FACTOR = 0.8;
+/**
+ * Frequent function words. An out-of-vocabulary edge may not start or end with one of them, so an
+ * unknown word does not swallow its neighbours (ฮิวจ์ส|ไม่|ได้, not ฮิวจ์สไม่ได้): the same name would
+ * otherwise be tokenized differently on its own and next to a function word, and a search for it
+ * would miss the document.
+ */
+const OOV_BOUNDARY_WORDS = [
+    'ที่', 'และ', 'ของ', 'ใน', 'ได้', 'ให้', 'ไม่', 'ว่า', 'เป็น',
+    'มี', 'จะ', 'ไป', 'มา', 'ก็', 'กับ', 'แต่', 'หรือ', 'จาก',
+    'โดย', 'เพื่อ', 'แล้ว', 'อยู่', 'นี้', 'นั้น', 'ซึ่ง', 'การ', 'ความ',
+    'ต่อ', 'ถึง', 'ยัง', 'เมื่อ', 'ทั้ง', 'ตาม', 'ด้วย', 'อีก', 'คือ',
+];
 const PAT_NONTHAI = /^(?:[a-zA-Z]+(?:[-_'][a-zA-Z0-9]+)*|\d+(?:,\d+)*(?:\.\d+)?%?|[ \t]+|\r?\n|[^\u0e00-\u0e7fa-zA-Z0-9 \t\r\n])/u;
 const PAT_ABBR = /^(?:(?:[เแโใไ]?[ก-ฮ][ัิีึืุู็่้๊๋]?|[ก-ฮ]{1,4})\.)+/u;
 /**
@@ -1212,6 +1242,21 @@ function normalizeForMatching(chars) {
 }
 function isToneMark(ch) {
     return ch >= '่' && ch <= '๋';
+}
+/** Whether `word` is longer than, and starts or ends with, a word of OOV_BOUNDARY_WORDS. */
+function bordersFunctionWord(word) {
+    return OOV_BOUNDARY_WORDS.some((f) => word.length > f.length && (word.startsWith(f) || word.endsWith(f)));
+}
+/**
+ * Characters an out-of-vocabulary edge may cover: Thai letters, vowels and marks, but not ๆ, ฯ,
+ * digits or other symbols, which are tokens of their own.
+ */
+function isOovChar(ch) {
+    const code = ch.codePointAt(0) ?? 0;
+    return ((code >= 0x0e01 && code <= 0x0e2e) ||
+        (code >= 0x0e30 && code <= 0x0e3a) ||
+        (code >= 0x0e40 && code <= 0x0e45) ||
+        (code >= 0x0e47 && code <= 0x0e4e));
 }
 function isThaiRune(code) {
     return code >= 0x0e00 && code <= 0x0e7f;
@@ -1317,7 +1362,7 @@ class Tokenizer {
                 // 1. Thai dictionary words starting at i
                 for (const m of this.trie.prefixesFromChars(chars, i, 25)) {
                     if (m.end <= n && validPos[m.end]) {
-                        edges.push({ to: m.end, word: m.word, cost: Math.log(normalizer / m.weight) });
+                        edges.push({ to: m.end, word: m.word, cost: Math.log(normalizer / m.weight), unknown: false });
                     }
                 }
                 // 2. Thai abbreviation patterns
@@ -1328,17 +1373,38 @@ class Tokenizer {
                     const j = i + abbrLen;
                     if (j <= n && validPos[j]) {
                         const letters = abbrLen - mStr.split('.').length + 1;
-                        edges.push({ to: j, word: mStr, cost: (ABBR_COST_FACTOR + ABBR_LETTER_COST_FACTOR * letters) * rareCost });
+                        edges.push({ to: j, word: mStr, cost: (ABBR_COST_FACTOR + ABBR_LETTER_COST_FACTOR * letters) * rareCost, unknown: false });
                     }
+                }
+                // 3. Out-of-vocabulary words of 1..OOV_MAX_CLUSTERS TCC clusters
+                let clusters = 0;
+                for (let j = i + 1; j <= n && isOovChar(chars[j - 1]); j++) {
+                    if (!validPos[j]) {
+                        continue;
+                    }
+                    clusters++;
+                    if (clusters > OOV_MAX_CLUSTERS) {
+                        break;
+                    }
+                    const oovWord = chars.slice(i, j).join('');
+                    if (bordersFunctionWord(oovWord)) {
+                        continue;
+                    }
+                    edges.push({
+                        to: j,
+                        word: oovWord,
+                        cost: (OOV_COST_FACTOR + OOV_CLUSTER_COST_FACTOR * (clusters - 1)) * rareCost,
+                        unknown: true,
+                    });
                 }
             }
             else {
-                // 3. Non-Thai tokens
+                // 4. Non-Thai tokens
                 const mNonThai = PAT_NONTHAI.exec(subText);
                 if (mNonThai && mNonThai[0].length > 0) {
                     const j = i + Array.from(mNonThai[0]).length;
                     if (j <= n && validPos[j]) {
-                        edges.push({ to: j, word: mNonThai[0], cost: rareCost });
+                        edges.push({ to: j, word: mNonThai[0], cost: rareCost, unknown: false });
                     }
                 }
             }
@@ -1356,7 +1422,7 @@ class Tokenizer {
                     dp[j] = newCost;
                     from[j] = i;
                     word[j] = edge.word;
-                    isUnk[j] = false;
+                    isUnk[j] = edge.unknown;
                 }
             }
         }
@@ -1576,7 +1642,7 @@ function fillLines(segments, width) {
     return { DEFAULT_BREAK_MARKER, canBreakBetween, thaiDisplayWidth, LineBreaker };
   })();
 
-  const api = { VERSION: "1.2.0" };
+  const api = { VERSION: "1.3.0" };
   for (const name of ["linebreak-data","uax14","tcc","trie","bigram","tokenizer","linebreaker"]) Object.assign(api, __modules[name]);
   root.ThaiBreak = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
