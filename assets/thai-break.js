@@ -1,7 +1,7 @@
 /**
  * ThaiBreak 1.3.0 — browser bundle for the demo
  * https://github.com/kamthorn/thai-break (Apache-2.0)
- * Built from thai-break@409f851 by scripts/build.js. Do not edit.
+ * Built from thai-break@fa1cf66 by scripts/build.js. Do not edit.
  */
 (function (root) {
   'use strict';
