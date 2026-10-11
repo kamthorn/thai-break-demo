@@ -1,7 +1,7 @@
 /**
  * ThaiBreak 1.3.0 — browser bundle for the demo
  * https://github.com/kamthorn/thai-break (Apache-2.0)
- * Built from thai-break@4a6eefa by scripts/build.js. Do not edit.
+ * Built from thai-break@ba6382f by scripts/build.js. Do not edit.
  */
 (function (root) {
   'use strict';
@@ -905,7 +905,7 @@ class CompactDawg {
             curr += 1 + numEdges * 4;
         }
     }
-    prefixesFromChars(chars, start, maxLen = 25) {
+    prefixesFromChars(chars, start, maxLen = 40, weights) {
         const limit = Math.min(chars.length, start + maxLen);
         let state = 0;
         const matches = [];
@@ -938,11 +938,8 @@ class CompactDawg {
             state = nextState;
             const nextOff = this.offsets[state];
             if ((this.data[nextOff] & 0x80) !== 0) {
-                matches.push({
-                    word: chars.slice(start, idx + 1).join(''),
-                    end: idx + 1,
-                    weight: 1.0,
-                });
+                const word = chars.slice(start, idx + 1).join('');
+                matches.push({ word, end: idx + 1, weight: weights?.get(word) ?? 1.0 });
             }
         }
         return matches;
@@ -951,6 +948,8 @@ class CompactDawg {
 class ThaiTrie {
     dawg;
     overlay = new Map();
+    /** Weights set with setWeight for words of the DAWG */
+    weights = new Map();
     prefixes = new Map();
     _maxWeight = 1.0;
     _totalWeight = 0.0;
@@ -1008,12 +1007,61 @@ class ThaiTrie {
             this._totalWeight += weight;
         }
     }
+    /** Whether `word` is a dictionary word. */
+    has(word) {
+        const chars = Array.from(word);
+        return this.prefixesFromChars(chars, 0, chars.length).some((m) => m.end === chars.length);
+    }
+    /**
+     * Set the weight of a word that is already in the dictionary. Returns false for other words.
+     */
+    setWeight(word, weight) {
+        const chars = Array.from(word);
+        const match = this.prefixesFromChars(chars, 0, chars.length).find((m) => m.end === chars.length);
+        if (!match)
+            return false;
+        if (!this.dawg) {
+            this.prefixes.set(word, weight);
+        }
+        else if ((this.overlay.get(word) ?? 0) > 0) {
+            this.overlay.set(word, weight);
+        }
+        else {
+            this.weights.set(word, weight);
+        }
+        this._totalWeight += weight - match.weight;
+        if (weight > this._maxWeight) {
+            this._maxWeight = weight;
+        }
+        return true;
+    }
+    /**
+     * Apply a word-weights file (`word<TAB>weight` lines, `#` comments) such as
+     * `data/word-weights.tsv`. Words that are not in the dictionary are skipped.
+     * Returns the number of words whose weight was set.
+     */
+    applyWeights(content) {
+        let applied = 0;
+        for (const raw of content.split('\n')) {
+            const line = raw.trim();
+            if (!line || line.startsWith('#'))
+                continue;
+            const tab = line.indexOf('\t');
+            const weight = tab > 0 ? Number(line.slice(tab + 1).trim()) : NaN;
+            if (!(weight > 0)) {
+                throw new Error(`bad word-weights line: ${line}`);
+            }
+            if (this.setWeight(line.slice(0, tab), weight))
+                applied++;
+        }
+        return applied;
+    }
     /**
      * Find all matching dictionary words starting at character index `start`.
      */
-    prefixesFromChars(chars, start, maxLen = 25) {
+    prefixesFromChars(chars, start, maxLen = 40) {
         if (this.dawg) {
-            const matches = this.dawg.prefixesFromChars(chars, start, maxLen);
+            const matches = this.dawg.prefixesFromChars(chars, start, maxLen, this.weights.size > 0 ? this.weights : undefined);
             if (this.overlay.size > 0) {
                 const limit = Math.min(chars.length, start + maxLen);
                 let cur = '';
@@ -1153,6 +1201,21 @@ class BigramModel {
 
   __modules['tokenizer'] = (function () {
 const { tccPosArray } = __modules['tcc'];
+/**
+ * The longest dictionary word that is looked up, in characters (a base word has at most 19, and the
+ * royal title พระบาทสมเด็จพระเจ้าอยู่หัว has 26).
+ */
+const MAX_WORD_LEN = 40;
+/**
+ * Names of the letters of the Latin alphabet in Thai. A name that starts another one comes first
+ * (เอ็ม before เอ), so the longest name wins.
+ */
+const LETTER_NAMES = [
+    'ดับเบิลยู', 'เอ็กซ์', 'แอล', 'เอ็ม', 'เอ็น', 'เอฟ', 'เอช', 'เอส', 'อาร์', 'คิว', 'แซด', 'ซี', 'ดี', 'จี', 'ไอ', 'เจ', 'เค',
+    'โอ', 'พี', 'ยู', 'วี', 'วาย', 'บี', 'ที', 'อี', 'เอ',
+].map((n) => Array.from(n));
+/** Cost of a run of two or more spelled-out letters (เอทีเอ็ม, ยูเอ็น), relative to the cost of the rarest word. */
+const LETTER_RUN_COST_FACTOR = 1.0;
 /** Cost of an abbreviation pattern, relative to the cost of the rarest word. */
 const ABBR_COST_FACTOR = 1.5;
 /**
@@ -1181,8 +1244,9 @@ const OOV_COST_FACTOR = 3.0;
  */
 const OOV_CLUSTER_COST_FACTOR = 0.8;
 /**
- * Frequent function words. An out-of-vocabulary edge may not start or end with one of them, so an
- * unknown word does not swallow its neighbours (ฮิวจ์ส|ไม่|ได้, not ฮิวจ์สไม่ได้): the same name would
+ * Frequent function words. An out-of-vocabulary edge may not start or end with one of them, nor
+ * contain one at a cluster boundary, so an unknown word does not swallow its neighbours
+ * (ฮิวจ์ส|ไม่|ได้, not ฮิวจ์สไม่ได้; ชวรัตน์|ที่|ลืม|ไว้, not ชวรัตน์ที่ลืมไว้): the same name would
  * otherwise be tokenized differently on its own and next to a function word, and a search for it
  * would miss the document.
  */
@@ -1191,7 +1255,15 @@ const OOV_BOUNDARY_WORDS = [
     'มี', 'จะ', 'ไป', 'มา', 'ก็', 'กับ', 'แต่', 'หรือ', 'จาก',
     'โดย', 'เพื่อ', 'แล้ว', 'อยู่', 'นี้', 'นั้น', 'ซึ่ง', 'การ', 'ความ',
     'ต่อ', 'ถึง', 'ยัง', 'เมื่อ', 'ทั้ง', 'ตาม', 'ด้วย', 'อีก', 'คือ',
+    'ไว้',
+    // words that often come right before a name
+    'นาย', 'นาง', 'พี่', 'น้อง', 'แพทย์', 'ตัว',
 ];
+/**
+ * Function words that may still occur inside an out-of-vocabulary word: they are frequent
+ * syllables of transliterated names (อาห์มาดิเนจัด, อะมีรุ้ลฮัจย์).
+ */
+const OOV_INNER_FUNCTION_WORDS = OOV_BOUNDARY_WORDS.filter((f) => f !== 'มา' && f !== 'มี').map((f) => Array.from(f));
 const PAT_NONTHAI = /^(?:[a-zA-Z]+(?:[-_'][a-zA-Z0-9]+)*|\d+(?:,\d+)*(?:\.\d+)?%?|[ \t]+|\r?\n|[^\u0e00-\u0e7fa-zA-Z0-9 \t\r\n])/u;
 const PAT_ABBR = /^(?:(?:[เแโใไ]?[ก-ฮ][ัิีึืุู็่้๊๋]?|[ก-ฮ]{1,4})\.)+/u;
 /**
@@ -1248,6 +1320,13 @@ function bordersFunctionWord(word) {
     return OOV_BOUNDARY_WORDS.some((f) => word.length > f.length && (word.startsWith(f) || word.endsWith(f)));
 }
 /**
+ * Whether `chars[start..end)` ends with a function word of OOV_INNER_FUNCTION_WORDS that starts at a
+ * cluster boundary after `start`. Every longer out-of-vocabulary edge from `start` would contain it.
+ */
+function endsWithInnerFunctionWord(chars, start, end, validPos) {
+    return OOV_INNER_FUNCTION_WORDS.some((f) => end - start > f.length && validPos[end - f.length] && f.every((c, k) => chars[end - f.length + k] === c));
+}
+/**
  * Characters an out-of-vocabulary edge may cover: Thai letters, vowels and marks, but not ๆ, ฯ,
  * digits or other symbols, which are tokens of their own.
  */
@@ -1281,6 +1360,45 @@ class Tokenizer {
     }
     setBigramModel(model) {
         this.bigramModel = model;
+    }
+    /**
+     * Word boundaries as UTF-16 offsets (JavaScript string indices) from 0 to `text.length`, in the
+     * style of an ICU BreakIterator: `text.slice(b[i], b[i + 1])` are consecutive segments that
+     * cover the text. Whitespace and punctuation are segments of their own.
+     */
+    boundaries(text) {
+        const offsets = [0];
+        let pos = 0;
+        for (const token of this.tokenize(text, true)) {
+            pos += token.length;
+            offsets.push(pos);
+        }
+        return offsets;
+    }
+    /**
+     * Whether what the abbreviation pattern matched is really words and a full stop. The pattern
+     * accepts any one to four consonant letters before a full stop, and อ ว ย count as consonants, so
+     * it matches "ไป." in "ต่อไป." and "ของส." in "ของส.ส.". It is not an abbreviation when it starts
+     * with a function word followed by more letters ("ของส.ส." is ของ + ส.ส.), or when it is one
+     * dictionary word with a vowel or tone mark and a final full stop that is not followed by a letter
+     * ("ต่อไป."), unless the dictionary has the abbreviation itself. A string of consonants only (มทส. นพ.)
+     * stays an abbreviation even when the dictionary has it without the full stop. `end` is the index of
+     * the character after the match.
+     */
+    abbreviationIsWords(chars, end, abbr) {
+        const first = abbr.split('.')[0];
+        if (OOV_BOUNDARY_WORDS.some((f) => first.length > f.length && first.startsWith(f))) {
+            return true;
+        }
+        const next = end < chars.length ? chars[end] : '';
+        const nextIsThai = next >= '\u0e01' && next <= '\u0e5b';
+        return (abbr.split('.').length === 2 &&
+            abbr.endsWith('.') &&
+            Array.from(first).length >= 2 &&
+            /[^ก-ฮ]/u.test(first) &&
+            !nextIsThai &&
+            this.trie.has(first) &&
+            !this.trie.has(abbr));
     }
     tokenize(text, keepWhitespace = false) {
         if (!text) {
@@ -1360,7 +1478,7 @@ class Tokenizer {
             const subText = text.slice(charOffsets[i]);
             if (isThaiRune(code)) {
                 // 1. Thai dictionary words starting at i
-                for (const m of this.trie.prefixesFromChars(chars, i, 25)) {
+                for (const m of this.trie.prefixesFromChars(chars, i, MAX_WORD_LEN)) {
                     if (m.end <= n && validPos[m.end]) {
                         edges.push({ to: m.end, word: m.word, cost: Math.log(normalizer / m.weight), unknown: false });
                     }
@@ -1371,12 +1489,24 @@ class Tokenizer {
                     const mStr = mAbbr[0];
                     const abbrLen = Array.from(mStr).length;
                     const j = i + abbrLen;
-                    if (j <= n && validPos[j]) {
+                    if (j <= n && validPos[j] && !this.abbreviationIsWords(chars, j, mStr)) {
                         const letters = abbrLen - mStr.split('.').length + 1;
                         edges.push({ to: j, word: mStr, cost: (ABBR_COST_FACTOR + ABBR_LETTER_COST_FACTOR * letters) * rareCost, unknown: false });
                     }
                 }
-                // 3. Out-of-vocabulary words of 1..OOV_MAX_CLUSTERS TCC clusters
+                // 3. Runs of two or more spelled-out letters (เอทีเอ็ม, ยูเอ็น, ดีเอสไอ)
+                for (let end = i, letters = 0;;) {
+                    const e = end;
+                    const name = LETTER_NAMES.find((nm) => e + nm.length <= n && validPos[e + nm.length] && nm.every((c, k) => chars[e + k] === c));
+                    if (!name)
+                        break;
+                    end += name.length;
+                    letters++;
+                    if (letters >= 2) {
+                        edges.push({ to: end, word: chars.slice(i, end).join(''), cost: LETTER_RUN_COST_FACTOR * rareCost, unknown: false });
+                    }
+                }
+                // 4. Out-of-vocabulary words of 1..OOV_MAX_CLUSTERS TCC clusters
                 let clusters = 0;
                 for (let j = i + 1; j <= n && isOovChar(chars[j - 1]); j++) {
                     if (!validPos[j]) {
@@ -1388,6 +1518,9 @@ class Tokenizer {
                     }
                     const oovWord = chars.slice(i, j).join('');
                     if (bordersFunctionWord(oovWord)) {
+                        if (endsWithInnerFunctionWord(chars, i, j, validPos)) {
+                            break;
+                        }
                         continue;
                     }
                     edges.push({
@@ -1399,7 +1532,7 @@ class Tokenizer {
                 }
             }
             else {
-                // 4. Non-Thai tokens
+                // 5. Non-Thai tokens
                 const mNonThai = PAT_NONTHAI.exec(subText);
                 if (mNonThai && mNonThai[0].length > 0) {
                     const j = i + Array.from(mNonThai[0]).length;
