@@ -3,14 +3,14 @@ window.ThaiBreakBuild = {
   "builtAt": "2026-10-11",
   "thaiBreak": {
     "version": "1.3.0",
-    "commit": "ba6382f",
+    "commit": "409f851",
     "date": "2026-10-11",
     "baseWords": 25411
   },
   "dictExtra": {
-    "commit": "0d635cb",
+    "commit": "a2bf15f",
     "date": "2026-10-11",
-    "extraWords": 17696,
-    "extraLinesWords": 9067
+    "extraWords": 17819,
+    "extraLinesWords": 9190
   }
 };

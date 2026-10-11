@@ -58,7 +58,7 @@ const setText = async (page, text) => {
 test('loads, segments the default text and shows the build info', async () => {
   const { page, errors } = await openPage({ viewport: { width: 1280, height: 900 } });
   assert.deepEqual((await tokens(page)).slice(0, 3), ['สวัสดี', 'ครับ', 'ยินดี']);
-  assert.match(await page.textContent('#fact-base'), /25,402/);
+  assert.match(await page.textContent('#fact-base'), /25,411/);
   assert.match(await page.textContent('#build-info'), /thai-break@\w+/);
   await page.click('[data-preset="extra"]');
   await page.waitForTimeout(300);
@@ -69,9 +69,9 @@ test('loads, segments the default text and shows the build info', async () => {
 
 test('dict-extra words are colored and compared with the base dictionary', async () => {
   const { page, errors } = await openPage();
-  await setText(page, 'ผู้เสียชีวิตถูกนำส่งโรงพยาบาลศิริราช');
+  await setText(page, 'ไปที่กงสุลใหญ่แล้ว');
   await page.waitForSelector('#output .tok.src-extra');
-  assert.deepEqual(await tokens(page, '#output .tok.src-extra'), ['ผู้เสียชีวิต']); // ศิริราช is also in the base dictionary
+  assert.deepEqual(await tokens(page, '#output .tok.src-extra'), ['กงสุลใหญ่']);
   assert.equal(await page.isVisible('#compare'), true);
   assert.ok((await page.$$('#output .tok.changed')).length > 0);
 

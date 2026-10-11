@@ -52,11 +52,11 @@ test('segments with the base dictionary', () => {
 });
 
 test('dict-extra words take effect', () => {
-  const text = 'ผู้เสียชีวิตถูกนำส่งโรงพยาบาลศิริราช';
+  const text = 'ไปที่กงสุลใหญ่แล้ว';
   const base = words(baseTrie(), text);
   const extra = words(addTsv(baseTrie(), DATA.extra), text);
   assert.notEqual(extra, base);
-  assert.match(extra, /เสียชีวิต/);
+  assert.match(extra, /กงสุลใหญ่/);
 });
 
 test('user words overlay the DAWG dictionary', () => {
