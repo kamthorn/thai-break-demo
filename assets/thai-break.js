@@ -1,7 +1,7 @@
 /**
- * ThaiBreak 1.3.0 — browser bundle for the demo
+ * ThaiBreak 1.4.0 — browser bundle for the demo
  * https://github.com/kamthorn/thai-break (Apache-2.0)
- * Built from thai-break@fa1cf66 by scripts/build.js. Do not edit.
+ * Built from thai-break@35d42cc by scripts/build.js. Do not edit.
  */
 (function (root) {
   'use strict';
@@ -1775,7 +1775,7 @@ function fillLines(segments, width) {
     return { DEFAULT_BREAK_MARKER, canBreakBetween, thaiDisplayWidth, LineBreaker };
   })();
 
-  const api = { VERSION: "1.3.0" };
+  const api = { VERSION: "1.4.0" };
   for (const name of ["linebreak-data","uax14","tcc","trie","bigram","tokenizer","linebreaker"]) Object.assign(api, __modules[name]);
   root.ThaiBreak = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
