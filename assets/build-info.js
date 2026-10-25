@@ -8,8 +8,8 @@ window.ThaiBreakBuild = {
     "baseWords": 25804
   },
   "dictExtra": {
-    "commit": "edead2b",
-    "date": "2026-10-19",
+    "commit": "b69d9ef",
+    "date": "2026-10-25",
     "extraWords": 14381,
     "extraLinesWords": 5712
   }
