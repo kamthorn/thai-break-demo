@@ -46,7 +46,7 @@ function need(file, hint) {
 }
 
 // Modules of thai-break/typescript/src in dependency order (index.ts is Node-only and not bundled)
-const MODULES = ['linebreak-data', 'uax14', 'tcc', 'trie', 'bigram', 'tokenizer', 'linebreaker'];
+const MODULES = ['linebreak-data', 'uax14', 'tcc_dfa', 'tcc', 'trie', 'bigram', 'tokenizer', 'html', 'linebreaker'];
 const distDir = path.join(thaiBreakDir, 'typescript', 'dist');
 
 /**
